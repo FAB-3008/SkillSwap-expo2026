@@ -164,7 +164,7 @@ $categories = $conn->query("SELECT * FROM categories ORDER BY name");
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <h6 class="card-title mb-1">
-                                <i class="bi <?= $r['icon'] ?>"></i> <?= htmlspecialchars($r['skill_name']) ?>
+                                <i class="bi <?= htmlspecialchars($r['icon']) ?>"></i> <?= htmlspecialchars($r['skill_name']) ?>
                             </h6>
                             <span class="badge <?= getLevelBadgeClass($r['level']) ?>"><?= getLevelLabel($r['level']) ?></span>
                         </div>

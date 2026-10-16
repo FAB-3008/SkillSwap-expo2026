@@ -1,12 +1,42 @@
 <?php
 
-function sanitize($conn, $data) {
-    return $conn->real_escape_string(htmlspecialchars(trim($data)));
-}
-
 function redirect($url) {
     header("Location: $url");
     exit;
+}
+
+function clientIp() {
+    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+}
+
+// Límite de frecuencia por IP, reutilizando la tabla login_attempts.
+// $bucket identifica la acción (p. ej. '__register__').
+function rateLimitExceeded($conn, $bucket, $max, $windowMinutes) {
+    $ip = clientIp();
+    $stmt = $conn->prepare("SELECT COUNT(*) c FROM login_attempts
+                            WHERE email = ? AND ip = ? AND success = 0
+                              AND created_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)");
+    $stmt->bind_param("ssi", $bucket, $ip, $windowMinutes);
+    $stmt->execute();
+    $count = (int)($stmt->get_result()->fetch_assoc()['c'] ?? 0);
+    $stmt->close();
+    return $count >= $max;
+}
+
+function rateLimitRecord($conn, $bucket) {
+    $ip = clientIp();
+    $stmt = $conn->prepare("INSERT INTO login_attempts (email, ip, success) VALUES (?, ?, 0)");
+    $stmt->bind_param("ss", $bucket, $ip);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Poda ocasional de intentos antiguos para evitar crecimiento sin control.
+function purgeOldAttempts($conn) {
+    if (random_int(1, 20) !== 1) {
+        return;
+    }
+    $conn->query("DELETE FROM login_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 2 DAY)");
 }
 
 function flash($key, $message = null) {

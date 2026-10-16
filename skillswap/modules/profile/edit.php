@@ -474,7 +474,7 @@ $certStmt->close();
                                     <br><small class="text-muted">Emitido: <?= date('d/m/Y', strtotime($c['issue_date'])) ?></small>
                                 <?php endif; ?>
                                 <?php if ($c['skill_name']): ?>
-                                    <span class="badge bg-info text-white ms-1"><i class="bi <?= $c['icon'] ?? 'bi-patch-check' ?>"></i> <?= htmlspecialchars($c['skill_name']) ?></span>
+                                    <span class="badge bg-info text-white ms-1"><i class="bi <?= htmlspecialchars($c['icon'] ?? 'bi-patch-check') ?>"></i> <?= htmlspecialchars($c['skill_name']) ?></span>
                                 <?php endif; ?>
                                 <?php if ($c['credential_url'] || $c['file_path']): ?>
                                     <br>

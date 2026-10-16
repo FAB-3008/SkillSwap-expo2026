@@ -72,7 +72,8 @@ function apiGet($url, $jar) {
     return json_decode($out, true) ?: ['raw' => $out];
 }
 
-$db = new mysqli('localhost', 'root', '', $DB);
+require __DIR__ . '/../skillswap/config/db.php';
+$db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($db->connect_error) { echo "No se pudo conectar: {$db->connect_error}\n"; exit(1); }
 
 $suffix = time();

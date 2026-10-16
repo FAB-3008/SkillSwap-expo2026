@@ -174,7 +174,7 @@ $issuedAt = date('d/m/Y');
             <h6 class="fw-bold border-bottom pb-2">Reconocimientos</h6>
             <?php foreach ($badges as $badge): ?>
                 <span class="badge <?= $badge['class'] ?> me-1">
-                    <i class="bi <?= $badge['icon'] ?>"></i> <?= htmlspecialchars($badge['name']) ?>
+                    <i class="bi <?= htmlspecialchars($badge['icon']) ?>"></i> <?= htmlspecialchars($badge['name']) ?>
                 </span>
             <?php endforeach; ?>
         </div>

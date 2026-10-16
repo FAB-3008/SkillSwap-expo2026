@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Por favor completa todos los campos.';
     } else {
         $conn = getConnection();
+        purgeOldAttempts($conn);
 
         // Brute-force: check blocked (>=5 failures in 15 min)
         $stmt = $conn->prepare("SELECT COUNT(*) c FROM login_attempts WHERE email = ? AND ip = ? AND success = 0 AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)");
@@ -26,7 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $attempts = (int)$stmt->get_result()->fetch_assoc()['c'];
         $stmt->close();
 
-        if ($attempts >= 5) {
+        // Cap adicional por IP: frena fuerza bruta distribuida entre muchos correos.
+        $stmt = $conn->prepare("SELECT COUNT(*) c FROM login_attempts WHERE ip = ? AND success = 0 AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)");
+        $stmt->bind_param("s", $ip);
+        $stmt->execute();
+        $ipFailures = (int)$stmt->get_result()->fetch_assoc()['c'];
+        $stmt->close();
+
+        if ($attempts >= 5 || $ipFailures >= 25) {
             $error = 'Demasiados intentos. Intenta de nuevo en 15 minutos.';
         } else {
             $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");

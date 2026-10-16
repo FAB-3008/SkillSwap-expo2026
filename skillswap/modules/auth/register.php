@@ -18,43 +18,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $semester = intval($_POST['semester'] ?? 0);
     $consent = isset($_POST['consent']);
 
+    // Antispam: campo trampa invisible para personas; los bots suelen rellenarlo.
+    $honeypot = trim($_POST['website'] ?? '');
+
     if (empty($name) || empty($email) || empty($password) || empty($confirm)) {
         $error = 'Por favor completa todos los campos obligatorios.';
+    } elseif ($honeypot !== '') {
+        $error = 'No se pudo completar el registro.';
     } elseif ($password !== $confirm) {
         $error = 'Las contraseñas no coinciden.';
     } elseif (strlen($password) < 8 || !preg_match('/[A-Za-z]/', $password) || !preg_match('/[0-9]/', $password)) {
         $error = 'La contraseña debe tener al menos 8 caracteres e incluir letras y números.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Ingresa un correo electrónico válido.';
+    } elseif (mb_strlen($name) > 150 || mb_strlen($email) > 150 || mb_strlen($career) > 150) {
+        $error = 'Alguno de los campos supera la longitud permitida.';
+    } elseif ($semester < 0 || $semester > 12) {
+        $error = 'El semestre debe estar entre 1 y 12.';
     } elseif (!$consent) {
         $error = 'Debes aceptar la política de privacidad para crear tu cuenta.';
     } else {
         $conn = getConnection();
+        purgeOldAttempts($conn);
 
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        if ($stmt->get_result()->num_rows > 0) {
-            $error = 'Este correo ya está registrado.';
+        if (rateLimitExceeded($conn, '__register__', 10, 60)) {
+            $error = 'Demasiados registros desde esta red. Intenta de nuevo más tarde.';
         } else {
-            $hashed = password_hash($password, PASSWORD_DEFAULT);
-            $stmt2 = $conn->prepare("INSERT INTO users (name, email, password, career, semester) VALUES (?, ?, ?, ?, ?)");
-            $stmt2->bind_param("ssssi", $name, $email, $hashed, $career, $semester);
-            if ($stmt2->execute()) {
-                $userId = $conn->insert_id;
-                session_regenerate_id(true);
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['user_role'] = 'student';
-                $stmt2->close();
-                $conn->close();
-                flash('success', '¡Bienvenido a SkillSwap! Comienza agregando tus habilidades.');
-                redirect('/skillswap/modules/profile/edit.php');
+            $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $exists = $stmt->get_result()->num_rows > 0;
+            $stmt->close();
+
+            if ($exists) {
+                $error = 'Este correo ya está registrado.';
             } else {
-                $error = 'Error al crear la cuenta. Inténtalo de nuevo.';
+                $hashed = password_hash($password, PASSWORD_DEFAULT);
+                $stmt2 = $conn->prepare("INSERT INTO users (name, email, password, career, semester) VALUES (?, ?, ?, ?, ?)");
+                $stmt2->bind_param("ssssi", $name, $email, $hashed, $career, $semester);
+                if ($stmt2->execute()) {
+                    $userId = $conn->insert_id;
+                    $stmt2->close();
+                    rateLimitRecord($conn, '__register__');
+                    session_regenerate_id(true);
+                    $_SESSION['user_id'] = $userId;
+                    $_SESSION['user_role'] = 'student';
+                    flash('success', '¡Bienvenido a SkillSwap! Comienza agregando tus habilidades.');
+                    $conn->close();
+                    redirect('/skillswap/modules/profile/edit.php');
+                } else {
+                    $stmt2->close();
+                    $error = 'Error al crear la cuenta. Inténtalo de nuevo.';
+                }
             }
-            $stmt2->close();
         }
-        $stmt->close();
         $conn->close();
     }
 }
@@ -107,6 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <form method="POST">
                         <?= csrf_field() ?>
+                        <div style="position:absolute; left:-9999px; top:-9999px;" aria-hidden="true">
+                            <label for="website">No completar este campo</label>
+                            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                        </div>
                         <div class="mb-3">
                             <label for="name" class="form-label">Nombre Completo *</label>
                             <input type="text" class="form-control" id="name" name="name"

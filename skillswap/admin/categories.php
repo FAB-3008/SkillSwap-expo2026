@@ -11,6 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'add_category') {
         $name = trim($_POST['name'] ?? '');
         $icon = trim($_POST['icon'] ?? 'bi-book');
+        if (!preg_match('/^bi-[a-z0-9-]{1,40}$/', $icon)) {
+            $icon = 'bi-book';
+        }
         if (!empty($name)) {
             $stmt = $conn->prepare("INSERT INTO categories (name, icon) VALUES (?, ?)");
             $stmt->bind_param("ss", $name, $icon);
@@ -76,7 +79,7 @@ $allSkills = $conn->query("SELECT s.*, c.name as category_name FROM skills s LEF
                 <table class="table table-sm">
                     <?php while ($c = $categories->fetch_assoc()): ?>
                         <tr>
-                            <td><i class="bi <?= $c['icon'] ?>"></i> <?= htmlspecialchars($c['name']) ?></td>
+                            <td><i class="bi <?= htmlspecialchars($c['icon']) ?>"></i> <?= htmlspecialchars($c['name']) ?></td>
                             <td class="text-muted"><?= $c['skill_count'] ?> skills</td>
                             <td>
                                 <form method="POST" class="d-inline">

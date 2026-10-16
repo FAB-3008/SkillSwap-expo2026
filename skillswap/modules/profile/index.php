@@ -92,7 +92,7 @@ $myCerts = $conn->query("
         <div class="mt-3">
             <?php foreach ($ownBadges as $badge): ?>
                 <span class="badge <?= $badge['class'] ?> me-1" title="<?= htmlspecialchars($badge['desc']) ?>">
-                    <i class="bi <?= $badge['icon'] ?>"></i> <?= htmlspecialchars($badge['name']) ?>
+                    <i class="bi <?= htmlspecialchars($badge['icon']) ?>"></i> <?= htmlspecialchars($badge['name']) ?>
                 </span>
             <?php endforeach; ?>
         </div>
@@ -112,7 +112,7 @@ $myCerts = $conn->query("
                             <div>
                                 <strong><?= htmlspecialchars($s['skill_name']) ?></strong>
                                 <br><small class="text-muted">
-                                    <i class="bi <?= $s['icon'] ?>"></i> <?= htmlspecialchars($s['category_name']) ?>
+                                    <i class="bi <?= htmlspecialchars($s['icon']) ?>"></i> <?= htmlspecialchars($s['category_name']) ?>
                                 </small>
                                 <?php if ($s['description']): ?>
                                     <br><small class="text-muted"><?= htmlspecialchars($s['description']) ?></small>
@@ -142,7 +142,7 @@ $myCerts = $conn->query("
                             <div>
                                 <strong><?= htmlspecialchars($s['skill_name']) ?></strong>
                                 <br><small class="text-muted">
-                                    <i class="bi <?= $s['icon'] ?>"></i> <?= htmlspecialchars($s['category_name']) ?>
+                                    <i class="bi <?= htmlspecialchars($s['icon']) ?>"></i> <?= htmlspecialchars($s['category_name']) ?>
                                 </small>
                             </div>
                             <span class="badge <?= getLevelBadgeClass($s['level']) ?>">
