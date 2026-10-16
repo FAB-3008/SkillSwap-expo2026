@@ -12,3 +12,7 @@ skillswap/assets/img/avatars/*
 *.tar.gz
 *.zip
 *.log
+
+# SEO generado por despliegue/dominio (ver herramientas-generar-seo.sh)
+robots.txt
+sitemap.xml
