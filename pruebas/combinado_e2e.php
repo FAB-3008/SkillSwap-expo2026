@@ -2,10 +2,10 @@
 /**
  * E2E del sistema combinado (skillswap-combinado) contra un entorno aislado:
  *   - BD: skillswap
- *   - Código servido en: http://localhost/skillswap/
+ *   - Código servido en: https://localhost/skillswap/
  * No toca la base de datos real.
  */
-$BASE = 'http://localhost/skillswap';
+$BASE = 'https://localhost/skillswap';
 $DB   = 'skillswap';
 
 $pass = 0; $fail = 0;
@@ -20,6 +20,8 @@ $jarB = tempnam(sys_get_temp_dir(), 'jb');
 
 function req($url, $post = null, $jar = null, $extraHeaders = []) {
     $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HEADER => true,
@@ -46,6 +48,8 @@ function csrfFrom($body) {
 
 function apiPost($url, $fields, $jar) {
     $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
@@ -61,6 +65,8 @@ function apiPost($url, $fields, $jar) {
 
 function apiGet($url, $jar) {
     $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_COOKIEJAR => $jar,
@@ -254,6 +260,8 @@ $tmpPng = tempnam(sys_get_temp_dir(), 'av') . '.png';
 file_put_contents($tmpPng, $png);
 
 $ch = curl_init("$BASE/modules/profile/edit.php");
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 $fields = [
     'action' => 'update_profile',
     'name' => 'Ana Tester',
@@ -294,6 +302,8 @@ file_put_contents($tmpEvil, $png);
 $r = req("$BASE/modules/profile/edit.php", null, $jarA);
 $t = csrfFrom($r['body']);
 $ch = curl_init("$BASE/modules/profile/edit.php");
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true,
     CURLOPT_COOKIEJAR => $jarA, CURLOPT_COOKIEFILE => $jarA, CURLOPT_TIMEOUT => 30,
@@ -315,6 +325,8 @@ file_put_contents($tmpReal, "<?php echo 'PWNED'; ?>");
 $rA = req("$BASE/modules/profile/edit.php", null, $jarA);
 $tA = csrfFrom($rA['body']);
 $ch = curl_init("$BASE/modules/profile/edit.php");
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true,
     CURLOPT_COOKIEJAR => $jarA, CURLOPT_COOKIEFILE => $jarA, CURLOPT_TIMEOUT => 30,
@@ -348,6 +360,8 @@ ok('reportes incluye gráficas', strpos($r['body'], 'skillsChart') !== false && 
 ok('reportes incluye botones de exportación', strpos($r['body'], 'export.php?type=users') !== false && strpos($r['body'], 'export.php?type=exchanges') !== false);
 
 $ch = curl_init("$BASE/admin/export.php?type=users");
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_COOKIEJAR => $jarB, CURLOPT_COOKIEFILE => $jarB, CURLOPT_TIMEOUT => 30]);
 $csvUsers = curl_exec($ch);
 $hdrUsers = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -357,6 +371,8 @@ ok('CSV usuarios con BOM y cabeceras', substr($csvUsers, 0, 3) === "\xEF\xBB\xBF
 ok('CSV usuarios incluye al usuario de prueba', strpos($csvUsers, $A) !== false);
 
 $ch = curl_init("$BASE/admin/export.php?type=exchanges");
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_COOKIEJAR => $jarB, CURLOPT_COOKIEFILE => $jarB, CURLOPT_TIMEOUT => 30]);
 $csvEx = curl_exec($ch);
 curl_close($ch);
