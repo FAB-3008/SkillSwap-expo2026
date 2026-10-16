@@ -1,0 +1,17 @@
+# SkillSwap - robots.txt
+# Ultima actualizacion: 2026-10-16
+
+User-agent: *
+Allow: /skillswap/
+Allow: /skillswap/index.php
+Allow: /skillswap/assets/
+
+# Zonas privadas / de aplicacion (no indexar)
+Disallow: /skillswap/modules/
+Disallow: /skillswap/admin/
+Disallow: /skillswap/includes/
+Disallow: /skillswap/config/
+Disallow: /skillswap/database/
+Disallow: /skillswap/pruebas/
+
+Sitemap: https://float-realm-hugo-hospitality.trycloudflare.com/skillswap/sitemap.xml

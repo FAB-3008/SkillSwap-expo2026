@@ -3,13 +3,53 @@ require_once __DIR__ . '/includes/auth.php';
 if (isLoggedIn()) {
     redirect('/skillswap/modules/dashboard/index.php');
 }
+
+// URL base dinámica (funciona en localhost, túnel o dominio propio) para SEO.
+$seoHost   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$seoScheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$seoUrl    = $seoScheme . '://' . $seoHost . '/skillswap/';
+$seoTitle  = 'SkillSwap - Intercambio de Habilidades entre Estudiantes';
+$seoDesc   = 'SkillSwap es la plataforma para intercambiar habilidades entre estudiantes: enseña lo que sabes, aprende lo que necesitas y gana horas y valoraciones. Regístrate gratis.';
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSwap - Intercambio de Habilidades</title>
+    <title><?= htmlspecialchars($seoTitle) ?></title>
+    <meta name="description" content="<?= htmlspecialchars($seoDesc) ?>">
+    <meta name="keywords" content="SkillSwap, intercambio de habilidades, aprender, enseñar, estudiantes, programación, diseño, idiomas, tutorías, trueque de conocimientos">
+    <meta name="author" content="SkillSwap">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="<?= htmlspecialchars($seoUrl) ?>">
+    <link rel="icon" type="image/svg+xml" href="/skillswap/assets/img/favicon.svg">
+    <!-- Open Graph (para enlaces en WhatsApp, Facebook, etc.) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SkillSwap">
+    <meta property="og:title" content="<?= htmlspecialchars($seoTitle) ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($seoDesc) ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($seoUrl) ?>">
+    <meta property="og:image" content="<?= htmlspecialchars($seoScheme . '://' . $seoHost) ?>/skillswap/assets/img/og-image.png">
+    <meta property="og:locale" content="es_AR">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= htmlspecialchars($seoTitle) ?>">
+    <meta name="twitter:description" content="<?= htmlspecialchars($seoDesc) ?>">
+    <meta name="twitter:image" content="<?= htmlspecialchars($seoScheme . '://' . $seoHost) ?>/skillswap/assets/img/og-image.png">
+    <!-- Datos estructurados (Google) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SkillSwap",
+      "url": "<?= htmlspecialchars($seoUrl) ?>",
+      "description": "<?= htmlspecialchars($seoDesc) ?>",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "es",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "ARS" }
+    }
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="/skillswap/assets/css/style.css?v=2" rel="stylesheet">
