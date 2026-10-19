@@ -463,10 +463,26 @@ foreach (['/index.php', '/admin/index.php', '/admin/users.php', '/admin/categori
 
 // ---------------------------------------------------------------- 16. Jerarquia de administradores
 // Sesion del admin principal (la cuenta de SkillSwap que trae el sistema).
+// Para que el repositorio NO lleve ninguna contraseña, la prueba pone una
+// clave temporal conocida en la BD y la restaura al terminar (incluso si el
+// script muere a medias) mediante una funcion de shutdown.
 $jarAdmin = tempnam(sys_get_temp_dir(), 'ja0');
 $r = req("$BASE/modules/auth/login.php", null, $jarAdmin);
 $t = csrfFrom($r['body']);
-$adminPass = getenv('SKILLSWAP_ADMIN_PASS') ?: '';
+
+$hashOriginal = null;
+$res = $db->query("SELECT password FROM users WHERE id = 1");
+if ($res && ($row = $res->fetch_assoc())) {
+    $hashOriginal = $row['password'];
+}
+if ($hashOriginal !== null) {
+    register_shutdown_function(function () use ($db, $hashOriginal) {
+        $db->query("UPDATE users SET password = '" . $db->real_escape_string($hashOriginal) . "' WHERE id = 1");
+    });
+}
+$adminPass = 'E2e-Admin-' . bin2hex(random_bytes(6));
+$hashTest = password_hash($adminPass, PASSWORD_DEFAULT);
+$db->query("UPDATE users SET password = '" . $db->real_escape_string($hashTest) . "' WHERE id = 1");
 req("$BASE/modules/auth/login.php", ['email' => 'admin@skillswap.com', 'password' => $adminPass, 'csrf_token' => $t], $jarAdmin);
 
 $r = req("$BASE/admin/users.php", null, $jarAdmin);
