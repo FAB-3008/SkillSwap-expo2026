@@ -39,7 +39,7 @@ $pageTitle = $pageTitle ?? 'SkillSwap';
     <link rel="icon" type="image/svg+xml" href="/skillswap/assets/img/favicon.svg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="/skillswap/assets/css/style.css?v=2" rel="stylesheet">
+    <link href="/skillswap/assets/css/style.css?v=3" rel="stylesheet">
     <script>
         (function() {
             var theme = localStorage.getItem('skillswap-theme') || 'light';
@@ -180,6 +180,16 @@ $pageTitle = $pageTitle ?? 'SkillSwap';
     </script>
 
     <main class="container py-4">
+        <?php
+        // Botón "Volver al panel" para las páginas internas del panel de administración
+        $__script = $_SERVER['SCRIPT_NAME'] ?? '';
+        if (strpos($__script, '/admin/') !== false && basename($__script) !== 'index.php'): ?>
+            <div class="mb-3">
+                <a href="/skillswap/admin/index.php" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al panel
+                </a>
+            </div>
+        <?php endif; ?>
         <?php
         $error = flash('error');
         $success = flash('success');
