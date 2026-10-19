@@ -539,6 +539,8 @@ table.table {
 }
 
 .alert-info {
+    background-color: var(--sk-teal-bg);
+    border-color: var(--sk-teal);
     color: var(--reddit-text);
 }
 
