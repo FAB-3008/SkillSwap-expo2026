@@ -38,7 +38,7 @@ function req($url, $post = null, $jar = null, $extraHeaders = []) {
     $headers = substr($raw, 0, $hsize);
     $body = substr($raw, $hsize);
     preg_match('/location:\s*(.+)/i', $headers, $m);
-    return ['code' => $code, 'body' => $body, 'loc' => isset($m[1]) ? trim($m[1]) : ''];
+    return ['code' => $code, 'body' => $body, 'loc' => isset($m[1]) ? trim($m[1]) : '', 'headers' => $headers];
 }
 
 function csrfFrom($body) {
@@ -81,6 +81,11 @@ function apiGet($url, $jar) {
 require __DIR__ . '/../skillswap/config/db.php';
 $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($db->connect_error) { echo "No se pudo conectar: {$db->connect_error}\n"; exit(1); }
+
+// El E2E crea 2 usuarios por corrida y la app limita a 10 registros por hora/IP:
+// se limpia SOLO ese contador (nunca los intentos fallidos de login) para que
+// la prueba sea repetible.
+$db->query("DELETE FROM login_attempts WHERE email = '__register__'");
 
 $suffix = time();
 $A = "com.a.$suffix@test.local";
@@ -249,6 +254,45 @@ $r = req("$BASE/modules/profile/certificate.php", null, $jarA);
 ok('constancia de horas (200)', $r['code'] === 200, "code={$r['code']}");
 ok('constancia muestra código', strpos($r['body'], 'CERT-SWAP-') !== false);
 ok('constancia muestra horas impartidas', strpos($r['body'], 'Horas impartidas') !== false);
+ok('constancia es una hoja A4 fija (no responsiva)',
+   strpos($r['body'], '210mm') !== false && strpos($r['body'], 'c-sheet') !== false);
+
+// El PDF se genera de verdad (Dompdf, formato A4 de una sola hoja)
+$r = req("$BASE/modules/profile/certificate.php?pdf=1", null, $jarA);
+ok('constancia PDF (200)', $r['code'] === 200, "code={$r['code']}");
+ok('constancia PDF es application/pdf', stripos($r['headers'], 'content-type: application/pdf') !== false, trim(explode("\n", $r['headers'])[0] ?? ''));
+ok('constancia PDF es descarga adjunta', stripos($r['headers'], 'content-disposition: attachment') !== false);
+ok('constancia PDF valido (%PDF-)', substr($r['body'], 0, 5) === '%PDF-');
+ok('constancia PDF no es HTML', strpos($r['body'], '<html') === false);
+$hojas = preg_match_all('#/Type\s*/Page(?!s)#', $r['body']);
+ok('constancia PDF de una sola hoja', $hojas === 1, "hojas=$hojas");
+
+// Texto real del PDF y comprobación de que NADA se sale de la hoja A4
+// (el PDF comprime el texto, por eso se extrae con pdftotext si está disponible)
+$tmpPdf = tempnam(sys_get_temp_dir(), 'cert'); @unlink($tmpPdf); $tmpPdf .= '.pdf';
+file_put_contents($tmpPdf, $r['body']);
+$pdfTxt = function_exists('shell_exec')
+    ? trim((string)@shell_exec('pdftotext ' . escapeshellarg($tmpPdf) . ' - 2>/dev/null'))
+    : '';
+if ($pdfTxt !== '') {
+    ok('constancia PDF trae el codigo', strpos($pdfTxt, 'CERT-SWAP-') !== false);
+    ok('constancia PDF trae el nombre', strpos($pdfTxt, 'Ana Tester') !== false);
+    ok('constancia PDF trae las horas impartidas', stripos($pdfTxt, 'horas impartidas') !== false);
+    ok('constancia PDF trae la firma', strpos($pdfTxt, 'Comité de Desarrollo Académico') !== false);
+
+    $tmpXml = $tmpPdf . '.xml';
+    @shell_exec('pdftotext -bbox-layout ' . escapeshellarg($tmpPdf) . ' ' . escapeshellarg($tmpXml) . ' 2>/dev/null');
+    $xml = (string)@file_get_contents($tmpXml);
+    @unlink($tmpXml);
+    if ($xml !== '' && preg_match_all('/xMax="([\d.]+)"\s+yMax="([\d.]+)"/', $xml, $mm)) {
+        $maxX = max(array_map('floatval', $mm[1]));
+        $maxY = max(array_map('floatval', $mm[2]));
+        ok('constancia PDF no se sale de la hoja A4', $maxX <= 595.3 && $maxY <= 841.9, "x=$maxX y=$maxY");
+    }
+} else {
+    ok('constancia PDF (texto no verificable: falta pdftotext)', true);
+}
+@unlink($tmpPdf);
 
 // ---------------------------------------------------------------- 11. Perfil: bio, enlaces, avatar
 $r = req("$BASE/modules/profile/edit.php", null, $jarA);

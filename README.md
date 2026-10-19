@@ -19,14 +19,14 @@ skillswap-combinado/
 ├── index.php                      -> redirige a /skillswap/
 ├── README.md                      -> este documento
 ├── pruebas/
-│   └── combinado_e2e.php          -> 74 pruebas automáticas (requiere el sistema desplegado)
+│   └── combinado_e2e.php          -> 99 pruebas automáticas (requiere el sistema desplegado)
 └── skillswap/                     -> la aplicación (se copia como /var/www/html/skillswap)
     ├── admin/       (5 archivos)  -> index, users, categories, reports, export (CSV)
     ├── api/         (2 archivos)  -> notifications.php, messages.php (JSON + CSRF)
     ├── assets/      -> css, js, img/avatars/
     ├── config/      -> db.example.php (plantilla) · db.php (real, NO versionado)
     ├── database/    -> skillswap.sql (12 tablas, listo para instalar)
-    ├── includes/    -> auth, functions, header, footer
+    ├── includes/    -> auth, functions, header, footer, certificate (PDF) y dompdf/ (librería)
     ├── modules/     -> auth, dashboard, exchanges, matches, messages, profile, ratings, skills
     ├── uploads/     -> certificados adjuntos
     └── .htaccess    -> endurecimiento para hosting compartido (AllowOverride All)
@@ -43,7 +43,7 @@ skillswap-combinado/
 | Insignias (Pionero, Mentor Experimentado, Tutor 5 Estrellas, Máster del Tiempo) | SkillSwap-main | `getUserBadges()`, perfiles propio y público |
 | Foto de perfil (avatar) | SkillSwap-main (corregido) | `uploadAvatarImage()`, `modules/profile/edit.php` |
 | Biografía + enlaces GitHub/LinkedIn | SkillSwap-main | `modules/profile/edit.php`, perfiles |
-| Constancia de horas imprimible (PDF desde el navegador) | SkillSwap-main | `modules/profile/certificate.php` |
+| Constancia de horas en **PDF real** (A4 fija, una sola hoja) | SkillSwap-main (reescrita) | `modules/profile/certificate.php` + `includes/certificate.php` |
 | Gráficas Chart.js en reportes | SkillSwap-main | `admin/reports.php` |
 | Exportación CSV de usuarios e intercambios | SkillSwap-main (corregido) | `admin/export.php` |
 
@@ -137,6 +137,19 @@ mysqldump -u skillswap_app -p skillswap > respaldo.sql      # respaldar primero
 ```bash
 php ~/Descargas/skillswap-combinado/pruebas/combinado_e2e.php    # esperado: 74/74
 ```
+
+### Dompdf (constancia en PDF)
+
+La constancia se genera con **Dompdf 3.1.6** (licencia **LGPL-2.1**), incluida en
+`skillswap/includes/dompdf/` (~11 MB, 319 archivos, sin necesidad de Composer).
+Requiere PHP >= 8.1 y las extensiones `dom`, `mbstring`, `gd` y `zlib` (estándar en
+PHP 8.x). La carpeta `includes/` ya está bloqueada por HTTP en el `.htaccess`.
+
+La hoja es **A4 fija** (210 mm x 297 mm) maquetada con tablas (sin flexbox/grid): así
+el texto no se desborda ni cambia de forma. En pantalla la hoja se **escala** en
+dispositivos angostos en lugar de refluír, y el PDF (`certificate.php?pdf=1`) sale
+siempre en **una sola página** (las habilidades se listan hasta 20 y el resto se
+resume con "… y N habilidades más").
 
 ## 8. Respaldos
 
