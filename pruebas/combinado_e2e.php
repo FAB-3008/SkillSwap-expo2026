@@ -417,6 +417,64 @@ foreach (['/index.php', '/admin/index.php', '/admin/users.php', '/admin/categori
     ok("admin $page responde sin errores", $accepted && !$fatal, "code={$r['code']}");
 }
 
+// ---------------------------------------------------------------- 16. Jerarquia de administradores
+// Sesion del admin principal (la cuenta de SkillSwap que trae el sistema).
+$jarAdmin = tempnam(sys_get_temp_dir(), 'ja0');
+$r = req("$BASE/modules/auth/login.php", null, $jarAdmin);
+$t = csrfFrom($r['body']);
+$adminPass = getenv('SKILLSWAP_ADMIN_PASS') ?: '';
+req("$BASE/modules/auth/login.php", ['email' => 'admin@skillswap.com', 'password' => $adminPass, 'csrf_token' => $t], $jarAdmin);
+
+$r = req("$BASE/admin/users.php", null, $jarAdmin);
+ok('admin principal ve la lista de usuarios', $r['code'] === 200, "code={$r['code']}");
+ok('lista marca la cuenta principal', strpos($r['body'], 'Cuenta principal') !== false);
+ok('lista ofrece "Quitar admin"', strpos($r['body'], 'Quitar admin') !== false);
+ok('promover pide confirmacion', strpos($r['body'], 'data-confirm="¿Hacer administrador') !== false);
+$t = csrfFrom($r['body']);
+
+// El admin principal promueve a un usuario de prueba
+$r = req("$BASE/admin/users.php", ['action' => 'promote', 'user_id' => $idx, 'csrf_token' => $t], $jarAdmin);
+$rolX = $db->query("SELECT role FROM users WHERE id=$idx")->fetch_assoc()['role'] ?? '';
+ok('admin principal promueve a admin', $rolX === 'admin', "rol=$rolX");
+
+// Un admin normal ve todo en modo lectura y no puede promover
+$r = req("$BASE/admin/users.php", null, $jarB);
+ok('admin normal ve aviso de solo lectura', strpos($r['body'], 'lectura') !== false);
+ok('admin normal no ve el boton de promover', strpos($r['body'], 'name="action" value="promote"') === false);
+ok('admin normal ve "Dejar de ser admin"', strpos($r['body'], 'Dejar de ser admin') !== false);
+$t = csrfFrom($r['body']);
+$r = req("$BASE/admin/users.php", ['action' => 'promote', 'user_id' => $ida, 'csrf_token' => $t], $jarB);
+$rolA = $db->query("SELECT role FROM users WHERE id=$ida")->fetch_assoc()['role'] ?? '';
+ok('un admin normal no puede promover', $rolA !== 'admin', "rol=$rolA");
+
+// Renuncia: el propio admin deja de ser admin
+$r = req("$BASE/admin/users.php", null, $jarB);
+$t = csrfFrom($r['body']);
+$r = req("$BASE/admin/users.php", ['action' => 'demote', 'user_id' => $idb, 'csrf_token' => $t], $jarB);
+$rolB = $db->query("SELECT role FROM users WHERE id=$idb")->fetch_assoc()['role'] ?? '';
+ok('un admin puede renunciar a ser admin', $rolB === 'student', "rol=$rolB");
+
+// El admin principal puede quitar admin a otro
+$r = req("$BASE/admin/users.php", null, $jarAdmin);
+$t = csrfFrom($r['body']);
+$r = req("$BASE/admin/users.php", ['action' => 'demote', 'user_id' => $idx, 'csrf_token' => $t], $jarAdmin);
+$rolX = $db->query("SELECT role FROM users WHERE id=$idx")->fetch_assoc()['role'] ?? '';
+ok('admin principal quita permisos de admin', $rolX === 'student', "rol=$rolX");
+
+// La cuenta principal no se puede degradar a si misma
+$r = req("$BASE/admin/users.php", null, $jarAdmin);
+$t = csrfFrom($r['body']);
+$r = req("$BASE/admin/users.php", ['action' => 'demote', 'user_id' => 1, 'csrf_token' => $t], $jarAdmin);
+$rol1 = $db->query("SELECT role FROM users WHERE id=1")->fetch_assoc()['role'] ?? '';
+ok('la cuenta principal no puede degradarse', $rol1 === 'admin', "rol=$rol1");
+
+// Un estudiante no puede tocar el panel de usuarios (lo redirige al dashboard)
+$r = req("$BASE/modules/dashboard/index.php", null, $jarA);
+$t = csrfFrom($r['body']);
+$r = req("$BASE/admin/users.php", ['action' => 'promote', 'user_id' => $idb, 'csrf_token' => $t], $jarA);
+$rolB = $db->query("SELECT role FROM users WHERE id=$idb")->fetch_assoc()['role'] ?? '';
+ok('un estudiante no puede promover', $rolB !== 'admin', "rol=$rolB");
+
 // ---------------------------------------------------------------- Limpieza
 // Limpieza: borra cualquier usuario de prueba creado (A, B, intruso y los de
 // escenarios re-registrados), por patrón para no depender de variables.

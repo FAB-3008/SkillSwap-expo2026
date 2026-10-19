@@ -60,6 +60,34 @@ function isAdmin() {
     return $user && $user['role'] === 'admin';
 }
 
+// ---------------------------------------------------------------------------
+// Jerarquia de administradores
+//
+//   admin principal  = la cuenta de SkillSwap que viene con el sistema.
+//                      Es la UNICA que puede nombrar o quitar administradores,
+//                      eliminar usuarios y restablecer contraseñas.
+//                      (Se identifica por su id de instalacion o por su correo.)
+//
+//   admin            = gestiona el panel, reportes y categorias, pero NO toca
+//                      roles de otros usuarios: ve la lista en modo lectura.
+//
+//   student          = usuario normal.
+// ---------------------------------------------------------------------------
+const SKILLSWAP_SUPER_ADMIN_ID = 1;
+const SKILLSWAP_SUPER_ADMIN_EMAIL = 'admin@skillswap.com';
+
+function isSuperAdminUser($user) {
+    if (!$user || ($user['role'] ?? '') !== 'admin') {
+        return false;
+    }
+    return (int)($user['id'] ?? 0) === SKILLSWAP_SUPER_ADMIN_ID
+        || strcasecmp((string)($user['email'] ?? ''), SKILLSWAP_SUPER_ADMIN_EMAIL) === 0;
+}
+
+function isSuperAdmin() {
+    return isSuperAdminUser(getCurrentUser());
+}
+
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
