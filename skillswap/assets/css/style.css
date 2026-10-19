@@ -748,12 +748,14 @@ html[data-theme="light"] .navbar-toggler-icon {
     --sk-green-strong: #2f7d4f;
     --sk-teal-strong: #2b7373;
     --sk-blue-strong: #2f5f9e;
+    --sk-purple-strong: #5f4b93;
 }
 
 [data-theme="dark"] {
     --sk-green-strong: #7fd39c;
     --sk-teal-strong: #6cc9c9;
     --sk-blue-strong: #8fbef0;
+    --sk-purple-strong: #b9a5e0;
 }
 
 .text-info {
@@ -876,4 +878,68 @@ html[data-theme="dark"] .btn-close {
     background-color: var(--reddit-card);
     color: var(--reddit-text);
     border-color: var(--reddit-border);
+}
+
+/* =========================================================================
+   Tipos de match: bidireccional vs uno-way
+   ========================================================================= */
+.match-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.6rem 1rem;
+}
+
+.match-legend-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--reddit-border);
+    border-left-width: 4px;
+    border-radius: 4px;
+    background: var(--reddit-card);
+    font-size: 0.82rem;
+    line-height: 1.3;
+    color: var(--reddit-muted);
+}
+
+.match-legend-item > i {
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.match-legend-item strong {
+    display: block;
+    color: var(--reddit-text);
+    font-size: 0.85rem;
+}
+
+.match-legend-item.bidirectional { border-left-color: var(--sk-purple); }
+.match-legend-item.bidirectional > i { color: var(--sk-purple-strong); }
+.match-legend-item.oneway { border-left-color: var(--sk-teal); }
+.match-legend-item.oneway > i { color: var(--sk-teal-strong); }
+
+.match-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+}
+
+.match-type-badge.bidirectional {
+    color: var(--sk-purple-strong);
+    background: var(--sk-purple-bg);
+    border: 1px solid var(--sk-purple);
+}
+
+.match-type-badge.oneway {
+    color: var(--sk-teal-strong);
+    background: var(--sk-teal-bg);
+    border: 1px solid var(--sk-teal);
 }
