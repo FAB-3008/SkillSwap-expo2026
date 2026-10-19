@@ -1,5 +1,8 @@
 # SkillSwap — Sistema Combinado
 
+**Repositorio:** https://github.com/FAB-3008/SkillSwap-expo2026
+**En vivo:** https://skillswap.freehosting.dev/skillswap/
+
 Fusión de **dos versiones de la misma aplicación** en una sola:
 
 - **Base**: el sistema que veníamos trabajando (el de `/var/www/html/skillswap`), el más avanzado:
