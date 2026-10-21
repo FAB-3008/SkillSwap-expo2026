@@ -548,7 +548,11 @@ $left = [];
 $res = $db->query("SELECT email FROM users WHERE email LIKE 'com.%@test.local'");
 while ($row = $res->fetch_assoc()) { $left[] = $row['email']; }
 ok('limpieza de usuarios de prueba', count($left) === 0, 'restantes=' . implode(',', $left));
-$notifsLeft = (int)$db->query("SELECT COUNT(*) c FROM notifications")->fetch_assoc()['c'];
+// Huérfanas = notificaciones cuyo usuario ya no existe (no cuentan las de
+// usuarios legítimos que permanecen en la base, p. ej. datos de demostración).
+$notifsLeft = (int)$db->query(
+    "SELECT COUNT(*) c FROM notifications n LEFT JOIN users u ON u.id = n.user_id WHERE u.id IS NULL"
+)->fetch_assoc()['c'];
 ok('sin notificaciones huerfanas', $notifsLeft === 0, "restantes=$notifsLeft");
 
 echo "\n================ $pass correctas / $fail fallidas ================\n";
